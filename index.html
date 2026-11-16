@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>灵动交互水晶灵龙 (Procedural Dragon Pet)</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: radial-gradient(circle at center, #0f172a 0%, #020617 100%);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      user-select: none;
+    }
+    #ui-container {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .btn {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #fff;
+      padding: 10px 18px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+    .btn:hover { background: rgba(255, 255, 255, 0.25); transform: translateY(-1px); }
+    
+    #palette-container {
+      display: flex;
+      gap: 8px;
+      background: rgba(0, 0, 0, 0.4);
+      padding: 8px 12px;
+      border-radius: 12px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .palette-btn {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, 0.6);
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+    .palette-btn:hover { transform: scale(1.25); border-color: #fff; }
+
+    .tips {
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 12px;
+      line-height: 1.6;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 12px;
+      border-radius: 10px;
+      max-width: 280px;
+    }
+  </style>
+</head>
+<body>
+  <div id="ui-container">
+    <button id="form-toggle" class="btn">当前形态: 🐾 陆地爬行</button>
+    <button id="mode-toggle" class="btn">当前输入: 🖱️ 鼠标控制</button>
+    <div id="palette-container"></div>
+    <div class="tips">
+      <strong>🎮 交互指南：</strong><br/>
+      • <strong>空格键 / Tab</strong>：秒切【陆地爬行】与【腾云游龙】<br/>
+      • <strong>数字 1 ~ 5</strong>：秒切 5 大水晶神龙皮肤<br/>
+      • <strong>点击鼠标 / 手势捏合</strong>：3D 肌肉弹力吐舌捕食！
+    </div>
+  </div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "name": "procedural-interactive-chameleon",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "three": "^0.160.0",
+    "@mediapipe/hands": "^0.4.1675469240",
+    "@mediapipe/camera_utils": "^0.3.1675466862"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0"
+  }
+}
