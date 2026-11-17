@@ -1,5 +1,6 @@
 import { Hands } from '@mediapipe/hands';
 import { Camera } from '@mediapipe/camera_utils';
+import { OneEuroFilter3D } from '../core/MathDynamics.js';
 
 export class HandTracker {
   constructor(onResultCallback) {
@@ -8,8 +9,8 @@ export class HandTracker {
     this.videoElement.style.display = 'none';
     document.body.appendChild(this.videoElement);
 
-    // 滤波平滑向量
-    this.smoothedIndex = { x: 0.5, y: 0.5, z: 0 };
+    // 使用 1€ Filter 替代固定 EMA，静止时稳如磐石，快速移动零延迟
+    this.euroFilter = new OneEuroFilter3D(1.35, 0.045, 1.0);
     this.isPinchingPrev = false;
 
     this.hands = new Hands({
@@ -56,33 +57,36 @@ export class HandTracker {
     const middleTip = lm[12];
     const wrist = lm[0];
 
-    // 指数移动平均平滑滤波 (EMA Filter, Alpha = 0.28) 彻底滤除微颤
-    const alpha = 0.28;
-    this.smoothedIndex.x += (rawIndex.x - this.smoothedIndex.x) * alpha;
-    this.smoothedIndex.y += (rawIndex.y - this.smoothedIndex.y) * alpha;
-    this.smoothedIndex.z += (rawIndex.z - this.smoothedIndex.z) * alpha;
+    // 1€ Filter 自适应滤波
+    const smoothedIndex = this.euroFilter.filter(rawIndex.x, rawIndex.y, rawIndex.z, performance.now());
 
-    // 捏合迟滞检测 (Hysteresis - 进入阈值 0.06，释放阈值 0.085)
-    const pinchDist = Math.hypot(thumbTip.x - rawIndex.x, thumbTip.y - rawIndex.y, thumbTip.z - rawIndex.z);
+    // 捏合迟滞检测 (Hysteresis: 进入 0.06, 释放 0.085)
+    const pinchDist = Math.hypot(
+      thumbTip.x - rawIndex.x,
+      thumbTip.y - rawIndex.y,
+      thumbTip.z - rawIndex.z
+    );
     let isPinching = this.isPinchingPrev;
     if (pinchDist < 0.06) isPinching = true;
     else if (pinchDist > 0.085) isPinching = false;
-    // 动作化手势：只在状态翻转的那一帧置位，避免"一直捏着"被当成持续触发
+
     const pinchStarted = isPinching && !this.isPinchingPrev;
     const pinchReleased = !isPinching && this.isPinchingPrev;
     this.isPinchingPrev = isPinching;
 
-    // 张开手掌检测
+    // 张开手掌检测 + 手部距离摄像头深度估算
     const palmSpan = Math.hypot(middleTip.x - wrist.x, middleTip.y - wrist.y);
-    const isOpenPalm = palmSpan > 0.46 && !isPinching;
+    const isOpenPalm = palmSpan > 0.45 && !isPinching;
+    const depthOffset = (palmSpan - 0.32) * 3.2; // 将手掌远近映射为 3D Z 轴偏移
 
     this.onResult({
       detected: true,
-      indexTip: this.smoothedIndex,
-      isPinching: isPinching,
-      isOpenPalm: isOpenPalm,
-      pinchStarted: pinchStarted,
-      pinchReleased: pinchReleased
+      indexTip: smoothedIndex,
+      depthZ: Math.max(-1.2, Math.min(1.2, depthOffset)),
+      isPinching,
+      isOpenPalm,
+      pinchStarted,
+      pinchReleased
     });
   }
 }

@@ -1,9 +1,10 @@
 import * as THREE from 'three';
+import { dampVector3 } from '../core/MathDynamics.js';
 
 export class EyeTracker {
   constructor(isLeft = true) {
     this.isLeft = isLeft;
-    this.currentLookDir = new THREE.Vector3(isLeft ? -1 : 1, 0, 0.5).normalize();
+    this.currentLookDir = new THREE.Vector3(0, 0, 1);
     this.wanderAngleX = 0;
     this.wanderAngleY = 0;
     this.wanderTimer = 0;
@@ -15,25 +16,29 @@ export class EyeTracker {
     const desiredDir = new THREE.Vector3();
 
     if (forceConverge) {
-      // 双眼同时对焦汇聚到猎物点
+      // 捕食或警戒时双眼同步高速锁定目标
       desiredDir.subVectors(targetPos, headPos).normalize();
+      dampVector3(this.currentLookDir, desiredDir, 22.0, delta).normalize();
     } else {
-      // 左眼专注追踪，右眼偶尔发呆游离（或交替）
+      // 日常状态：左眼紧盯目标，右眼展示变色龙特有的独立环视特征
       if (this.isLeft) {
         desiredDir.subVectors(targetPos, headPos).normalize();
       } else {
         this.wanderTimer -= delta;
         if (this.wanderTimer <= 0) {
-          this.wanderAngleX = (Math.random() - 0.5) * 1.8;
-          this.wanderAngleY = (Math.random() - 0.5) * 1.8;
-          this.wanderTimer = 1.0 + Math.random() * 2.0; // 随机停留 1-3 秒
+          this.wanderAngleX = (Math.random() - 0.5) * 1.4;
+          this.wanderAngleY = (Math.random() - 0.5) * 1.1;
+          this.wanderTimer = 1.2 + Math.random() * 2.2;
         }
-        desiredDir.set(Math.sin(this.wanderAngleX) + 0.8, Math.cos(this.wanderAngleY), 0.5).normalize();
+        const toTarget = new THREE.Vector3().subVectors(targetPos, headPos).normalize();
+        desiredDir
+          .copy(toTarget)
+          .add(new THREE.Vector3(Math.sin(this.wanderAngleX) * 0.45, Math.sin(this.wanderAngleY) * 0.35, 0))
+          .normalize();
       }
+      dampVector3(this.currentLookDir, desiredDir, 10.0, delta).normalize();
     }
 
-    // 阻尼平滑转动眼球
-    this.currentLookDir.lerp(desiredDir, 0.1);
     return this.currentLookDir;
   }
 }
